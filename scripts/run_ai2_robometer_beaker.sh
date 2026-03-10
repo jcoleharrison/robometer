@@ -50,36 +50,38 @@ for dataset in "${DATASETS[@]}"; do
   echo "  dataset: ${dataset}"
   echo "  output:  ${output_dir}"
 
+  eval_cmd="uv run python scripts/eval_ai2_robometer_export.py"
+  eval_cmd+=" --inference-mode local"
+  eval_cmd+=" --model-path \"${MODEL_PATH}\""
+  eval_cmd+=" --datasets-root \"${DATASETS_ROOT}\""
+  eval_cmd+=" --dataset-names \"${dataset}\""
+  eval_cmd+=" --max-input-frames \"${MAX_INPUT_FRAMES}\""
+  eval_cmd+=" --request-retries \"${REQUEST_RETRIES}\""
+  eval_cmd+=" --timeout-s \"${TIMEOUT_S}\""
+  eval_cmd+=" --output-dir \"${output_dir}\""
+
+  if [[ "${USE_FULL_VIDEO}" == "1" ]]; then
+    eval_cmd+=" --use-full-video"
+  fi
+  if [[ "${RESUME}" == "1" ]]; then
+    eval_cmd+=" --resume"
+  fi
+  if [[ "${FSYNC_EACH_RECORD}" == "1" ]]; then
+    eval_cmd+=" --fsync-each-record"
+  fi
+
   remote_cmd=(
     "set -euo pipefail"
-    "uv sync --extra open"
+    "uv sync --extra robometer"
     "echo \"Running dataset: ${dataset}\""
     "echo \"Output dir: ${output_dir}\""
     "mkdir -p \"${output_dir}\""
-    "uv run python scripts/eval_ai2_robometer_export.py"
-    "  --inference-mode local"
-    "  --model-path \"${MODEL_PATH}\""
-    "  --datasets-root \"${DATASETS_ROOT}\""
-    "  --dataset-names \"${dataset}\""
-    "  --max-input-frames \"${MAX_INPUT_FRAMES}\""
-    "  --request-retries \"${REQUEST_RETRIES}\""
-    "  --timeout-s \"${TIMEOUT_S}\""
-    "  --output-dir \"${output_dir}\""
+    "${eval_cmd}"
   )
 
-  if [[ "${USE_FULL_VIDEO}" == "1" ]]; then
-    remote_cmd+=("  --use-full-video")
-  fi
-  if [[ "${RESUME}" == "1" ]]; then
-    remote_cmd+=("  --resume")
-  fi
-  if [[ "${FSYNC_EACH_RECORD}" == "1" ]]; then
-    remote_cmd+=("  --fsync-each-record")
-  fi
   if [[ "${RUN_ANALYSIS}" == "1" ]]; then
     remote_cmd+=(
-      "uv run python scripts/analyze_ai2_robometer_export.py"
-      "  --input-dir \"${output_dir}\""
+      "uv run python scripts/analyze_ai2_robometer_export.py --input-dir \"${output_dir}\""
     )
   fi
 
@@ -95,6 +97,7 @@ for dataset in "${DATASETS[@]}"; do
     --task-name "${beaker_name}"
     --description "${run_name}"
     --priority "${PRIORITY}"
+    --no-python
   )
 
   if [[ -n "${HF_TOKEN_SECRET}" ]]; then
