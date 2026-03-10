@@ -38,7 +38,6 @@ RESUME="${RESUME:-1}"
 FSYNC_EACH_RECORD="${FSYNC_EACH_RECORD:-1}"
 RUN_ANALYSIS="${RUN_ANALYSIS:-1}"
 
-INSTALL_CMD="${INSTALL_CMD:-uv pip install -e '.[open]'}"
 HF_TOKEN_SECRET="${HF_TOKEN_SECRET:-}"
 
 for dataset in "${DATASETS[@]}"; do
@@ -53,6 +52,7 @@ for dataset in "${DATASETS[@]}"; do
 
   remote_cmd=(
     "set -euo pipefail"
+    "uv sync --extra open"
     "echo \"Running dataset: ${dataset}\""
     "echo \"Output dir: ${output_dir}\""
     "mkdir -p \"${output_dir}\""
@@ -95,7 +95,6 @@ for dataset in "${DATASETS[@]}"; do
     --task-name "${beaker_name}"
     --description "${run_name}"
     --priority "${PRIORITY}"
-    --install "${INSTALL_CMD}"
   )
 
   if [[ -n "${HF_TOKEN_SECRET}" ]]; then
